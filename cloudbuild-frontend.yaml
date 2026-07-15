@@ -1,0 +1,40 @@
+substitutions:
+  # Must match a target defined in firebase.json
+  _FIREBASE_TARGET: production
+
+steps:
+  - id: install-deps
+    name: node:22-alpine
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        corepack enable
+        corepack prepare pnpm@10.12.1 --activate
+        pnpm install --frozen-lockfile --filter "frontend..."
+
+  - id: build-frontend
+    name: node:22-alpine
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        corepack enable
+        pnpm --filter frontend build
+
+  - id: deploy-hosting
+    name: node:22-alpine
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        corepack enable
+        npx firebase-tools@latest deploy \
+          --only hosting:${_FIREBASE_TARGET} \
+          --project ${PROJECT_ID} \
+          --non-interactive
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s
