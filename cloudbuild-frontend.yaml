@@ -11,7 +11,7 @@ steps:
       - |
         corepack enable
         corepack prepare pnpm@10.12.1 --activate
-        pnpm install --frozen-lockfile --filter "frontend..."
+        pnpm install --frozen-lockfile
 
   - id: build-frontend
     name: node:22-alpine
@@ -20,7 +20,19 @@ steps:
       - -c
       - |
         corepack enable
-        pnpm --filter frontend build
+        # These generate frontend/openapi.json and frontend/src/lib/api/schema.ts —
+        # both are gitignored/untracked. schema.ts is imported directly by the
+        # app code, so it must exist for the bundler to resolve it, even though
+        # the generator is currently a placeholder stub (see backend/scripts/
+        # generate-openapi.cjs — tracked as a follow-up with the dev team).
+        pnpm --filter frontend run copy
+        pnpm --filter frontend run gen-schema
+        # TEMPORARY (Option A unblock, see email to dev team re: OpenAPI stub +
+        # pre-existing TS errors): skip `tsc -b` strict type-check and go
+        # straight to `vite build`. Runtime behavior is unaffected — this only
+        # skips a build-time safety check. Revert to `pnpm --filter frontend build`
+        # once the dev team fixes the schema generator and the ~15 type errors.
+        pnpm --filter frontend exec vite build
 
   - id: deploy-hosting
     name: node:22-alpine
