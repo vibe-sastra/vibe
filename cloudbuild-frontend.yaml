@@ -20,18 +20,21 @@ steps:
       - -c
       - |
         corepack enable
-        # These generate frontend/openapi.json and frontend/src/lib/api/schema.ts —
-        # both are gitignored/untracked. schema.ts is imported directly by the
-        # app code, so it must exist for the bundler to resolve it, even though
-        # the generator is currently a placeholder stub (see backend/scripts/
-        # generate-openapi.cjs — tracked as a follow-up with the dev team).
-        pnpm --filter frontend run copy
+        # frontend's own "copy" script has a relative-path bug (goes up 2
+        # dirs from backend/ instead of 1, landing outside /workspace) — bug
+        # flagged to dev team separately. Bypassing it here with a correct
+        # explicit path so the generator (currently a stub, also flagged)
+        # writes to where gen-schema actually expects to find it.
+        node backend/scripts/generate-openapi.cjs --output frontend/openapi.json
         pnpm --filter frontend run gen-schema
         # TEMPORARY (Option A unblock, see email to dev team re: OpenAPI stub +
         # pre-existing TS errors): skip `tsc -b` strict type-check and go
         # straight to `vite build`. Runtime behavior is unaffected — this only
         # skips a build-time safety check. Revert to `pnpm --filter frontend build`
         # once the dev team fixes the schema generator and the ~15 type errors.
+        # Heavy ML deps (tensorflow/mediapipe/onnxruntime) need a raised heap
+        # limit — default V8 heap (~2GB) isn't enough for this bundle.
+        export NODE_OPTIONS="--max-old-space-size=8192"
         pnpm --filter frontend exec vite build
 
   - id: deploy-hosting
@@ -48,5 +51,8 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  # Default Cloud Build machine doesn't have enough RAM for this frontend's
+  # heavy ML dependencies (tensorflow/mediapipe/onnxruntime) during bundling.
+  machineType: E2_HIGHCPU_8
 
-timeout: 1200s
+timeout: 1800s
