@@ -35,6 +35,20 @@ steps:
         # Heavy ML deps (tensorflow/mediapipe/onnxruntime) need a raised heap
         # limit — default V8 heap (~2GB) isn't enough for this bundle.
         export NODE_OPTIONS="--max-old-space-size=8192"
+        # Vite build-time env vars — src/lib/firebase.ts calls initializeApp()
+        # and getAnalytics() at module load with these; without them the app
+        # crashes on load (blank page) before React ever renders. These are
+        # NOT secrets — Firebase web SDK config is meant to be public/embedded
+        # in the client bundle.
+        export VITE_FIREBASE_API_KEY="AIzaSyASBdDAM0vk0VfyVdSuZ3_bFQEFVRjKuKs"
+        export VITE_FIREBASE_AUTH_DOMAIN="gcp-project-502409.firebaseapp.com"
+        export VITE_FIREBASE_PROJECT_ID="gcp-project-502409"
+        export VITE_FIREBASE_STORAGE_BUCKET="gcp-project-502409.firebasestorage.app"
+        export VITE_FIREBASE_MESSAGING_SENDER_ID="768575634176"
+        export VITE_FIREBASE_APP_ID="1:768575634176:web:bc3de3c383144db2ac51e5"
+        # TODO: update once backend is deployed and its real Cloud Run URL is known.
+        export VITE_BASE_URL="https://REPLACE_WITH_BACKEND_URL/api"
+        export VITE_IS_RECAPTCHA_ENABLED="false"
         pnpm --filter frontend exec vite build
 
   - id: deploy-hosting
