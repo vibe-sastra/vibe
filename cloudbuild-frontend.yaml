@@ -17,7 +17,7 @@ steps:
     name: node:22-alpine
     entrypoint: sh
     env:
-      - 'NODE_OPTIONS=--max-old-space-size=4096'
+      - 'NODE_OPTIONS=--max-old-space-size=6144'
     args:
       - -c
       - |
