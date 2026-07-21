@@ -3,6 +3,8 @@ substitutions:
   _AR_REPO: vibe-backend
   _SERVICE_NAME: vibe-backend-production
   _NODE_ENV: production
+  _VPC_NETWORK: vibe-vpc
+  _VPC_SUBNET: vibe-subnet-as
 
 steps:
   - id: docker-build
@@ -35,12 +37,14 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      # Non-sensitive vars with known-safe values, set directly.
-      # APP_URL is still a placeholder — it's this service's OWN Cloud Run
-      # URL, which we won't know until after the first backend deploy.
-      # Update it once and redeploy after seeing the assigned Cloud Run URL.
-      - --set-env-vars=NODE_ENV=${_NODE_ENV},APP_MODULE=all,APP_ROUTE_PREFIX=/api,DB_NAME=vibe,IS_RECAPTCHA_ENABLED=false,ENABLE_DB_BACKUP=false,ENABLE_HP_JOB=false,AI_PROXY_ADDRESS=socks5h://localhost:1055,APP_ORIGINS=https://gcp-project-502409.web.app,FRONTEND_URL=https://gcp-project-502409.web.app,APP_URL=REPLACE_WITH_BACKEND_URL
-      # Only truly sensitive / required-with-no-default values go through Secret Manager.
+      - --command=dumb-init
+      - --args=node,build/index.js
+      - --memory=2Gi
+      - --cpu=2
+      - --network=${_VPC_NETWORK}
+      - --subnet=${_VPC_SUBNET}
+      - --vpc-egress=private-ranges-only
+      - --set-env-vars=NODE_ENV=${_NODE_ENV},APP_MODULE=all,APP_ROUTE_PREFIX=/api,DB_NAME=vibe,IS_RECAPTCHA_ENABLED=false,ENABLE_DB_BACKUP=false,ENABLE_HP_JOB=false,APP_ORIGINS=https://gcp-project-502409.web.app,FRONTEND_URL=https://gcp-project-502409.web.app,APP_URL=https://vibe-backend-production-768575634176.asia-south1.run.app
       - --set-secrets=ADMIN_PASSWORD=ADMIN_PASSWORD:latest,DB_URL=DB_URL:latest
 
 images:

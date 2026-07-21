@@ -1,5 +1,5 @@
 substitutions:
-  # Must match a target defined in firebase.json
+ 
   _FIREBASE_TARGET: production
 
 steps:
@@ -24,17 +24,15 @@ steps:
         corepack enable
         pnpm --filter frontend run copy
         pnpm --filter frontend run gen-schema
-        # Vite build-time env vars — src/lib/firebase.ts calls initializeApp()
-        # and getAnalytics() at module load with these; without them the app
-        # crashes on load (blank page) before React ever renders. These are
-        # NOT secrets — Firebase web SDK config is meant to be public/embedded
+
         # in the client bundle.
-        export VITE_FIREBASE_API_KEY="AIzaSyASBdDAM0vk0VfyVdSuZ3_bFQEFVRjKuKs"
-        export VITE_FIREBASE_AUTH_DOMAIN="gcp-project-502409.firebaseapp.com"
-        export VITE_FIREBASE_PROJECT_ID="gcp-project-502409"
-        export VITE_FIREBASE_STORAGE_BUCKET="gcp-project-502409.firebasestorage.app"
-        export VITE_FIREBASE_MESSAGING_SENDER_ID="768575634176"
-        export VITE_FIREBASE_APP_ID="1:768575634176:web:bc3de3c383144db2ac51e5"
+        export VITE_FIREBASE_API_KEY="${_API_KEY}"
+        export VITE_FIREBASE_AUTH_DOMAIN="${_AUTH_DOMAIN}"
+        export VITE_FIREBASE_PROJECT_ID="${PROJECT_ID}"
+        export VITE_FIREBASE_STORAGE_BUCKET="${_STORAGE_BUCKET}"
+        export VITE_FIREBASE_MESSAGING_SENDER_ID="${_SENDER_ID}"
+        export VITE_FIREBASE_APP_ID="${_FIREBASE_APP_ID}"
+
         # TODO: update once backend is deployed and its real Cloud Run URL is known.
         export VITE_BASE_URL="https://REPLACE_WITH_BACKEND_URL/api"
         export VITE_IS_RECAPTCHA_ENABLED="false"
@@ -54,8 +52,8 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  # Default Cloud Build machine doesn't have enough RAM for this frontend's
-  # heavy ML dependencies (tensorflow/mediapipe/onnxruntime) during bundling.
+  
+  
   machineType: E2_HIGHCPU_8
   diskSizeGb: 100
 
