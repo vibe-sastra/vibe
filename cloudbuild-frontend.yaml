@@ -34,7 +34,7 @@ steps:
         export VITE_FIREBASE_APP_ID="${_FIREBASE_APP_ID}"
 
         # TODO: update once backend is deployed and its real Cloud Run URL is known.
-        export VITE_BASE_URL="https://REPLACE_WITH_BACKEND_URL/api"
+        export VITE_BASE_URL="${_VITE_BASE_URL}"
         export VITE_IS_RECAPTCHA_ENABLED="false"
         pnpm --filter frontend build
 
