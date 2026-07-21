@@ -44,7 +44,7 @@ steps:
       - --network=${_VPC_NETWORK}
       - --subnet=${_VPC_SUBNET}
       - --vpc-egress=private-ranges-only
-      - --set-env-vars=NODE_ENV=${_NODE_ENV},APP_MODULE=all,APP_ROUTE_PREFIX=/api,DB_NAME=vibe,IS_RECAPTCHA_ENABLED=false,ENABLE_DB_BACKUP=false,ENABLE_HP_JOB=false,APP_ORIGINS=https://gcp-project-502409.web.app,FRONTEND_URL=https://gcp-project-502409.web.app,APP_URL=https://vibe-backend-production-768575634176.asia-south1.run.app
+      - --set-env-vars=NODE_ENV=${_NODE_ENV},APP_MODULE=all,APP_ROUTE_PREFIX=/api,DB_NAME=vibe,IS_RECAPTCHA_ENABLED=false,ENABLE_DB_BACKUP=false,ENABLE_HP_JOB=false,APP_ORIGINS=https://vibecloud.sastra.edu,FRONTEND_URL=https://vibecloud.sastra.edu,APP_URL=https://api.vibecloud.sastra.edu
       - --set-secrets=ADMIN_PASSWORD=ADMIN_PASSWORD:latest,DB_URL=DB_URL:latest
 
 images:
