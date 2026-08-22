@@ -2321,6 +2321,26 @@ class ProgressService extends BaseService {
       throw new NotFoundError('Item not found');
     }
 
+    /**
+     * Idempotency guard: if the frontend retries this call (e.g. because a
+     * slow/truncated response on the first attempt looked like a failure),
+     * and this item is already marked complete, treat it as a safe no-op
+     * instead of re-running the transaction - which would otherwise throw
+     * on the watch-time record already being closed out, confusing a
+     * successful retry into an error.
+     */
+    if (
+      await this.progressRepository.isItemCompleted(
+        userId,
+        courseId,
+        courseVersionId,
+        itemId,
+        cohortId,
+      )
+    ) {
+      return;
+    }
+
     const versionStatus = await this.courseRepo.getCourseVersionStatus(
       courseVersionId,
     );
@@ -2454,18 +2474,19 @@ class ProgressService extends BaseService {
       );
       const totalCourseItems = allCourseItemIdSet.size;
 
+      // Fetched once and reused below (step 4's non-linear check and step 8's
+      // percentage calculation both need this - it used to be queried twice).
+      const completedItemsArray = await this.progressRepository.getCompletedItems(
+        userId,
+        courseId,
+        courseVersionId,
+        cohortId,
+      );
+
       // ----------------------------------------------------
       // 4. NON-LINEAR PROGRESSION FINAL COMPLETION CHECK
       // ----------------------------------------------------
       if (!linearProgressionEnabled && isCompleted) {
-        const completedItemsArray =
-          await this.progressRepository.getCompletedItems(
-            userId,
-            courseId,
-            courseVersionId,
-            cohortId,
-          );
-
         const completedItemsSet = new Set(
           completedItemsArray.map(id => id.toString()),
         );
@@ -2565,14 +2586,9 @@ class ProgressService extends BaseService {
       // ----------------------------------------------------
       // 8. DERIVED PROGRESS CALCULATION
       // ----------------------------------------------------
-      const completedItemsArray =
-        await this.progressRepository.getCompletedItems(
-          userId,
-          courseId,
-          courseVersionId,
-          cohortId,
-        );
-
+      // completedItemsArray was already fetched once above (step 3/4 reuse
+      // it too) - computeCourseProgressPercent takes it as a parameter
+      // specifically so callers that already have it don't fetch it again.
       const {percentCompleted, completedCourseItemsCount} =
         await this.computeCourseProgressPercent(
           completedItemsArray,
